@@ -1,5 +1,5 @@
 const { AuthenticationError } = require('apollo-server-express');
-const { Profile } = require('../models');
+const { Book } = require('../models');
 const { User } = require('../models');
 const { signToken } = require('../utils/auth');
 
@@ -15,20 +15,20 @@ const resolvers = {
             return Profile.findOne({ _id: userId });
           },
 
-        };  
+        };
 
 
     Mutation: {
-        addUser: async (parent, { name, email, password }) => {
-          const profile = await Profile.create({ name, email, password });
+        addUser: async (parent, args) => {
+          const user = await User.create({ args });
           const token = signToken(user);
     
           return { token, user };
         },
         login: async (parent, { email, password }) => {
-          const profile = await Profile.findOne({ email });
+          const user = await Profile.findOne({ email });
     
-          if (!profile) {
+          if (!user) {
             throw new AuthenticationError('No profile with this email found!');
           }
     
@@ -38,41 +38,46 @@ const resolvers = {
             throw new AuthenticationError('Incorrect password!');
           }
     
-          const token = signToken(profile);
-          return { token, profile };
+          const token = signToken(user);
+          return { token, user };
         },
     
-        addBook: async (parent, { userId, authors, description, bookId,image,link, title }) => {
-          return Profile.findOneAndUpdate(
-            { _id: userId },
+        saveBook: async (parent, { book }, context ) => {
+            if (context.user) {
+                const updateUser = await User.findOneAndUpdate(
+            { _id: context.user._id },
             {
-              $addToSet: { 
-                authors: authors,
-                description: description,
-                bookId: bookId,
-                image: image,
-                link: link,
-                title: title
-            },
+              $addToSet: { saveBooks: book },
             },
             {
               new: true,
               runValidators: true,
             }
-          );
+          )
+          return updateUser;
+        }
+        throw new AuthenticationError('Please login first')
+        
         },
-        removeUser: async (parent, { userId }) => {
-          return User.findOneAndDelete({ _id: userId });
+
+
+        saveBook: async (parent, { book }, context ) => {
+            if (context.user) {
+                const updateUser = await User.findOneAndUpdate(
+            { _id: context.user._id },
+            {
+              $addToSet: { saveBooks: book },
+            },
+            {
+              new: true,
+              runValidators: true,
+            }
+          )
+          return updateUser;
+        }
+        throw new AuthenticationError('Please login first')
+        
         },
-        removeBook: async (parent, { userId, args }) => {
-          return User.findOneAndUpdate(
-            { _id: userId },
-            { $pull: { args } },
-            { new: true }
-          );
-        },
-      },
-    };
     
     module.exports = resolvers;
 
