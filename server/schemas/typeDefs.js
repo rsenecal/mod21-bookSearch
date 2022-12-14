@@ -9,7 +9,6 @@ const typeDefs = gql`
     image: String
     link: String
     title: String
-    skills: [String]!
   }
 
   type User {
@@ -17,28 +16,33 @@ const typeDefs = gql`
     username: String
     email: String
     password: String
-    books:[]
+    savedBooks:[Book]
   }
 
   
   type Auth {
     token: ID!
-    book: Book
+    user: User
   }
+  input SavedBookData {
+    authors: [String]
+    description: String
+    bookId: String
+    image: String
+    link: String
+    title: String
+}
 
   type Query {
-    books: [Book]!
-    book(bookId: ID!): Book
+    me: User
   }
 
   type Mutation {
-    # Set up mutations to handle creating a profile or logging into a profile and return Auth type
-    addBook(authors: String!, description: String!, bookId: String!, image: String!, link: String!, title: Strings!): Auth
-    login(email: String!, password: String!): Auth
 
-    addUser(userId: ID!, username: String!, email:Strings!): User
-    saveBook(userId: ID!, ): User
-    deleteBook(bookId: ID!): Book
+    login(email: String!, password: String!): Auth
+    addUser(username: String!, email:String!, password:String!): Auth
+    saveBook(book: SavedBookData ): User
+    removeBook(bookId: String!): User
   }
 `;
 

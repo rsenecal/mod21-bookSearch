@@ -1,5 +1,5 @@
 const { AuthenticationError } = require('apollo-server-express');
-const { Book } = require('../models');
+// const { Book } = require('../models');
 const { User } = require('../models');
 const { signToken } = require('../utils/auth');
 
@@ -7,15 +7,17 @@ const resolvers = {
 
     Query: {
 
-        users: async () => {
-            return Profile.find();
-          },
-      
-          user: async (parent, { userId }) => {
-            return Profile.findOne({ _id: userId });
-          },
+        me: async (parent, args, context) => {
+            if (context.user) {
+                const userData = await User.findOne({ _id: context.user._id })
 
-        };
+                .select('-__v -password')
+                return userData;
+            }
+            throw new AuthenticationError('Please login first');
+        }
+    },
+        
 
 
     Mutation: {
@@ -61,12 +63,12 @@ const resolvers = {
         },
 
 
-        saveBook: async (parent, { book }, context ) => {
+        removeBook: async (parent, { book }, context ) => {
             if (context.user) {
                 const updateUser = await User.findOneAndUpdate(
             { _id: context.user._id },
             {
-              $addToSet: { saveBooks: book },
+              $pull: { saveBooks: book },
             },
             {
               new: true,
@@ -75,9 +77,11 @@ const resolvers = {
           )
           return updateUser;
         }
-        throw new AuthenticationError('Please login first')
         
-        },
+    }
+}
+
+};
     
     module.exports = resolvers;
 
